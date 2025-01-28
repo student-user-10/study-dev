@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GS TRAVELS</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            /* Add background image and properties */
+            background-image: url('travel_background.jpg'); /* Replace with your image path */
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .info, .form-group, .car-selection, #results, #booking, #userAccount {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.9); /* Add a semi-transparent background for readability */
+        }
+        .form-group, .car-selection {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background: #065aa3;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #212a88;
+        }
+        .car-option {
+            text-align: center;
+        }
+        .car-option img {
+            width: 100%;
+            max-width: 200px;
+            height: auto;
+            margin-bottom: 10px;
+        }
+        .car-option label {
+            display: inline-block;
+            width: auto;
+            font-weight: normal;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>GS TRAVELS</h1>
+
+    <div class="info">
+        <h2>Company Information</h2>
+        <p>We provide the best travel experiences and luxury services.</p>
+    </div>
+
+    <!-- Car Selection -->
+    <div class="car-selection">
+        <h2>Select Your Car</h2>
+        <div class="car-option">
+            <img src="ertiga.jpg" alt="Ertiga">
+            <label><input type="radio" name="car" value="Ertiga" required> Ertiga</label>
+        </div>
+        <div class="car-option">
+            <img src="dzire.jpg" alt="Dzire">
+            <label><input type="radio" name="car" value="Dzire" required> Dzire</label>
+        </div>
+        <div class="car-option">
+            <img src="ft.webp" alt="Ford Traveler">
+            <label><input type="radio" name="car" value="Ford Traveler" required> Ford Traveler</label>
+        </div>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="form-group">
+        <h2>Search for Booking</h2>
+        <form id="searchForm">
+            <label for="source">Source:</label>
+            <input type="text" id="source" name="source" placeholder="Enter your starting location" required>
+            <label for="destination">Destination:</label>
+            <input type="text" id="destination" name="destination" placeholder="Enter your destination" required>
+            <label for="date">Travel Date:</label>
+            <input type="date" id="date" name="date" required>
+            <button type="submit">Search</button>
+        </form>
+    </div>
+
+    <!-- Results Page -->
+    <div id="results" style="display:none;">
+        <h2>Available Services</h2>
+        <div id="carList">
+            <!-- List of cars will be dynamically inserted here -->
+        </div>
+    </div>
+
+    <!-- Booking Page -->
+    <div id="booking" style="display:none;">
+        <h2>Service Details and Booking</h2>
+        <div id="carDetails">
+            <!-- Car details and seat selection form will be dynamically inserted here -->
+        </div>
+    </div>
+
+    <!-- User Account Page -->
+    <div id="userAccount" style="display:none;">
+        <h2>User Account</h2>
+        <p>View booking history and manage preferences.</p>
+        <!-- User account details will be dynamically inserted here -->
+    </div>
+
+    <script>
+        let car_selection;
+
+        document.getElementById("searchForm").addEventListener("submit", function(event) {
+            event.preventDefault(); // Prevent the default form submission
+
+            fetch('http://localhost:5000/cars')
+                .then(response => response.json())
+                .then(data => {
+                    car_selection = data; // Store the fetched data in the car_selection variable
+                    const carList = document.getElementById("carList");
+                    carList.innerHTML = '';
+                    data.forEach(car => {
+                        const carItem = document.createElement("div");
+                        carItem.innerHTML = `
+                            <p><strong>${car.name}</strong> (${car.model}) - Capacity: ${car.capacity}</p>
+                            <button onclick="displayCarDetails(${car.id})">Book Now</button>
+                        `;
+                        carList.appendChild(carItem);
+                    });
+                    document.getElementById("results").style.display = 'block';
+                })
+                .catch(error => console.error('Error fetching cars:', error));
+        });
+
+        function displayCarDetails(carId) {
+            const selectedCar = car_selection.find(car => car.id === carId);
+
+            const carDetails = document.getElementById("carDetails");
+            carDetails.innerHTML = `
+                <p><strong>${selectedCar.name}</strong> (${selectedCar.model}) - Capacity: ${selectedCar.capacity}</p>
+                <h3>Select Your Seat</h3>
+                <form id="bookingForm">
+                    <!-- Seat selection will depend on your seat data structure -->
+                    <label>
+                        <input type="checkbox" name="seat" value="1"> Seat 1
+                    </label>
+                    <br>
+                    <button type="submit">Confirm Booking</button>
+                </form>
+            `;
+            document.getElementById("booking").style.display = 'block';
+
+            document.getElementById("bookingForm").addEventListener("submit", function(event) {
+                event.preventDefault();
+                bookCar(carId);
+            });
+        }
+
+        function bookCar(carId) {
+            const date = document.getElementById("date").value;
+            const userId = 1; // Assume a logged-in user with ID 1
+
+            const bookingData = {
+                car_id: carId,
+                user_id: userId,
+                date: date
+            };
+
+            fetch('http://localhost:5000/book-car', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(bookingData)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message);
+                    if (data.message === "Booking confirmed!") {
+                        // Optionally handle successful booking, such as navigating to another page or showing booking details
+                    }
+                })
+                .catch(error => console.error('Error booking car:', error));
+        }
+    </script>
+
+</body>
+</html>
